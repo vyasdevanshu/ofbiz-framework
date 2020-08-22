@@ -42,7 +42,7 @@ import org.w3c.dom.Element;
  */
 public abstract class ModelFormAction {
 
-    public static final String MODULE = ModelFormAction.class.getName();
+    private static final String MODULE = ModelFormAction.class.getName();
 
     public static List<ModelAction> readSubActions(ModelForm modelForm, Element parentElement) {
         List<? extends Element> actionElementList = UtilXml.childElementList(parentElement);
@@ -72,7 +72,6 @@ public abstract class ModelFormAction {
 
     /**
      * Models the &lt;call-parent-actions&gt; element.
-     *
      * @see <code>widget-form.xsd</code>
      */
     @SuppressWarnings("serial")
@@ -115,14 +114,13 @@ public abstract class ModelFormAction {
             }
         }
 
-        protected static enum ActionsKind {
+        protected enum ActionsKind {
             ACTIONS, ROW_ACTIONS
         }
     }
 
     /**
      * Models the &lt;service&gt; element.
-     *
      * @see <code>widget-form.xsd</code>
      */
     @SuppressWarnings("serial")
