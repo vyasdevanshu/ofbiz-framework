@@ -87,7 +87,7 @@ public abstract class ListFinder extends Finder {
 
         // process order-by
         List<? extends Element> orderByElementList = UtilXml.childElementList(element, "order-by");
-        if (orderByElementList.size() > 0) {
+        if (!orderByElementList.isEmpty()) {
             orderByExpanderList = new ArrayList<>(orderByElementList.size());
             for (Element orderByElement : orderByElementList) {
                 orderByExpanderList.add(FlexibleStringExpander.getInstance(orderByElement.getAttribute("field-name")));
@@ -117,8 +117,8 @@ public abstract class ListFinder extends Finder {
 
     @Override
     public void runFind(Map<String, Object> context, Delegator delegator) throws GeneralException {
-        String entityName = this.entityNameExdr.expandString(context);
-        String useCacheStr = this.useCacheStrExdr.expandString(context);
+        String entityName = this.getEntityNameExdr().expandString(context);
+        String useCacheStr = this.getUseCacheStrExdr().expandString(context);
         String filterByDateStr = this.filterByDateStrExdr.expandString(context);
         String distinctStr = this.distinctStrExdr.expandString(context);
         String delegatorName = this.delegatorNameExdr.expandString(context);

@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.Stack;
 
+import org.apache.ofbiz.base.util.Debug;
+import org.apache.ofbiz.base.util.ObjectType;
 import org.apache.ofbiz.service.calendar.TemporalExpression;
 import org.apache.ofbiz.service.calendar.TemporalExpressionVisitor;
 import org.apache.ofbiz.service.calendar.TemporalExpressions;
@@ -62,6 +64,7 @@ import net.fortuna.ical4j.model.property.RRule;
  */
 public class ICalRecurConverter implements TemporalExpressionVisitor {
     protected static final WeekDay DAY_OF_WEEK_ARRAY[] = {WeekDay.SU, WeekDay.MO, WeekDay.TU, WeekDay.WE, WeekDay.TH, WeekDay.FR, WeekDay.SA};
+    private static final String MODULE = ObjectType.class.getName();
 
     @SuppressWarnings("unchecked")
     public static void convert(TemporalExpression expr, PropertyList eventProps) {
@@ -75,7 +78,7 @@ public class ICalRecurConverter implements TemporalExpressionVisitor {
             dateStart = converter.dateStart;
             eventProps.add(dateStart);
         }
-        if (dateStart != null && converter.exRuleList.size() > 0) {
+        if (dateStart != null && !converter.exRuleList.isEmpty()) {
             // iCalendar quirk - if exclusions exist, then the start date must be excluded also
             ExDate exdate = new ExDate();
             exdate.getDates().add(dateStart.getDate());
@@ -97,6 +100,11 @@ public class ICalRecurConverter implements TemporalExpressionVisitor {
 
     protected ICalRecurConverter() { }
 
+    /**
+     * Consolidate recurs recur.
+     * @param recurList the recur list
+     * @return the recur
+     */
     @SuppressWarnings("unchecked")
     protected Recur consolidateRecurs(List<Recur> recurList) {
         // Try to consolidate a list of Recur instances into one instance
@@ -118,13 +126,13 @@ public class ICalRecurConverter implements TemporalExpressionVisitor {
                 freqCount = recur.getInterval();
             }
         }
-        if (freq == null && monthList.size() > 0) {
+        if (freq == null && !monthList.isEmpty()) {
             freq = Recur.MONTHLY;
-        } else if (freq == null && (monthDayList.size() > 0 || weekDayList.size() > 0)) {
+        } else if (freq == null && (!monthDayList.isEmpty() || !weekDayList.isEmpty())) {
             freq = Recur.DAILY;
-        } else if (freq == null && hourList.size() > 0) {
+        } else if (freq == null && !hourList.isEmpty()) {
             freq = Recur.HOURLY;
-        } else if (freq == null && minuteList.size() > 0) {
+        } else if (freq == null && !minuteList.isEmpty()) {
             freq = Recur.MINUTELY;
         }
         if (freq == null) {
@@ -181,10 +189,10 @@ public class ICalRecurConverter implements TemporalExpressionVisitor {
             childExpr.accept(this);
         }
         this.state = this.stateStack.pop();
-        if (newState.inclRecurList.size() > 0) {
+        if (!newState.inclRecurList.isEmpty()) {
             this.incRuleList.add(new RRule(this.consolidateRecurs(newState.inclRecurList)));
         }
-        if (newState.exRecurList.size() > 0) {
+        if (!newState.exRecurList.isEmpty()) {
             this.exRuleList.add(new ExRule(this.consolidateRecurs(newState.exRecurList)));
         }
     }
@@ -204,7 +212,7 @@ public class ICalRecurConverter implements TemporalExpressionVisitor {
 
     @Override
     public void visit(Substitution expr) {
-        // iCalendar format does not support substitutions. Do nothing for now.
+        Debug.logVerbose("iCalendar format does not support substitutions. Do nothing for now", MODULE);
     }
 
     @Override

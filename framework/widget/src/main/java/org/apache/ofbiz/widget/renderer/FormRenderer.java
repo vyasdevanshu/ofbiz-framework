@@ -121,6 +121,10 @@ public class FormRenderer {
     private static Collector<ModelFormField, ?, Map<Integer, List<ModelFormField>>> groupingByPosition =
             Collectors.groupingBy(ModelFormField::getPosition, TreeMap::new, Collectors.toList());
 
+    /**
+     * Gets focus field name.
+     * @return the focus field name
+     */
     public String getFocusFieldName() {
         return focusFieldName;
     }
@@ -275,7 +279,7 @@ public class FormRenderer {
     }
 
     // Return a stateful predicate that satisfies only the first time a field name is encountered.
-    static private Predicate<ModelFormField> filteringDuplicateNames() {
+    private static Predicate<ModelFormField> filteringDuplicateNames() {
         Set<String> seenFieldNames = new HashSet<>();
         return field -> seenFieldNames.add(field.getName());
     }
@@ -370,7 +374,7 @@ public class FormRenderer {
 
                 innerFormFields.add(modelFormField);
             }
-            if (innerFormFields.size() > 0) {
+            if (!innerFormFields.isEmpty()) {
                 numOfColumns++;
             }
 
@@ -394,7 +398,7 @@ public class FormRenderer {
             List<ModelFormField> mainFieldList = listsMap.get("mainFieldList");
 
             int numOfCells = innerDisplayHyperlinkFieldsBegin.size() + innerDisplayHyperlinkFieldsEnd.size()
-                    + (innerFormFields.size() > 0 ? 1 : 0);
+                    + (!innerFormFields.isEmpty() ? 1 : 0);
             int numOfColumnsToSpan = maxNumOfColumns - numOfCells + 1;
             if (numOfColumnsToSpan < 1) {
                 numOfColumnsToSpan = 1;
@@ -417,7 +421,7 @@ public class FormRenderer {
                         formStringRenderer.renderFieldTitle(writer, context, modelFormField);
                         formStringRenderer.renderFormatHeaderRowCellClose(writer, context, modelForm, modelFormField);
                     }
-                    if (innerFormFields.size() > 0) {
+                    if (!innerFormFields.isEmpty()) {
                         // TODO: manage colspan
                         formStringRenderer.renderFormatHeaderRowFormCellOpen(writer, context, modelForm);
                         Iterator<ModelFormField> innerFormFieldsIt = innerFormFields.iterator();
@@ -522,7 +526,7 @@ public class FormRenderer {
             List<ModelFormField> innerDisplayHyperlinkFieldsEnd, List<ModelFormField> mainFieldList, int position,
             int numOfColumns) throws IOException {
         int numOfCells = innerDisplayHyperlinkFieldsBegin.size() + innerDisplayHyperlinkFieldsEnd.size()
-                + (innerFormFields.size() > 0 ? 1 : 0);
+                + (!innerFormFields.isEmpty() ? 1 : 0);
         int numOfColumnsToSpan = numOfColumns - numOfCells + 1;
         if (numOfColumnsToSpan < 1) {
             numOfColumnsToSpan = 1;
@@ -581,7 +585,7 @@ public class FormRenderer {
             }
 
             // The form cell is rendered only if there is at least an input field
-            if (innerFormFields.size() > 0) {
+            if (!innerFormFields.isEmpty()) {
                 // render the "form" cell
                 formStringRenderer.renderFormatItemRowFormCellOpen(writer, localContext, modelForm); // TODO: colspan
 
@@ -677,7 +681,7 @@ public class FormRenderer {
         Object obj = context.get(lookupName);
         if (obj == null) {
             if (Debug.verboseOn()) {
-                 Debug.logVerbose("No object for list or iterator name [" + lookupName + "] found, so not rendering rows.", MODULE);
+                Debug.logVerbose("No object for list or iterator name [" + lookupName + "] found, so not rendering rows.", MODULE);
             }
             return;
         }
@@ -803,7 +807,8 @@ public class FormRenderer {
                             break;
                         }
 
-                        // if this is a list or multi form don't skip here because we don't want to skip the table cell, will skip the actual field later
+                        // if this is a list or multi form don't skip here because we don't want to skip the table cell,
+                        // will skip the actual field later
                         if (!"list".equals(modelForm.getType()) && !"multi".equals(modelForm.getType())
                                 && !modelFormField.shouldUse(localContext)) {
                             continue;
@@ -827,7 +832,8 @@ public class FormRenderer {
                             continue;
                         }
 
-                        // if this is a list or multi form don't skip here because we don't want to skip the table cell, will skip the actual field later
+                        // if this is a list or multi form don't skip here because we don't want to skip the table cell,
+                        // will skip the actual field later
                         if (!"list".equals(modelForm.getType()) && !"multi".equals(modelForm.getType())
                                 && !modelFormField.shouldUse(localContext)) {
                             continue;
@@ -850,7 +856,8 @@ public class FormRenderer {
                             continue;
                         }
 
-                        // if this is a list or multi form don't skip here because we don't want to skip the table cell, will skip the actual field later
+                        // if this is a list or multi form don't skip here because we don't want to skip the table cell,
+                        // will skip the actual field later
                         if (!"list".equals(modelForm.getType()) && !"multi".equals(modelForm.getType())
                                 && !modelFormField.shouldUse(localContext)) {
                             continue;
@@ -865,8 +872,8 @@ public class FormRenderer {
                     // the fields in the three lists created in the preprocessing phase
                     // are now rendered: this will create a visual representation
                     // of one row (for the current position).
-                    if (innerDisplayHyperlinkFieldsBegin.size() > 0 || innerFormFields.size() > 0
-                            || innerDisplayHyperlinkFieldsEnd.size() > 0) {
+                    if (!innerDisplayHyperlinkFieldsBegin.isEmpty() || !innerFormFields.isEmpty()
+                            || !innerDisplayHyperlinkFieldsEnd.isEmpty()) {
                         this.renderItemRow(writer, localContext, formStringRenderer, formPerItem, hiddenIgnoredFieldList,
                                 innerDisplayHyperlinkFieldsBegin, innerFormFields, innerDisplayHyperlinkFieldsEnd,
                                 fieldListByPosition, currentPosition, numOfColumns);
@@ -965,8 +972,7 @@ public class FormRenderer {
         }
 
         // render all hidden & ignored fields
-        List<ModelFormField> hiddenIgnoredFieldList =
-        getHiddenIgnoredFields(context, alreadyRendered, tempFieldList, -1);
+        List<ModelFormField> hiddenIgnoredFieldList = getHiddenIgnoredFields(context, alreadyRendered, tempFieldList, -1);
         renderHiddenIgnoredFields(writer, context, formStringRenderer, hiddenIgnoredFieldList);
 
         // render formatting wrapper open
@@ -1115,6 +1121,7 @@ public class FormRenderer {
             if (stayingOnRow) {
                 // no spacer cell, might add later though...
                 //formStringRenderer.renderFormatFieldRowSpacerCell(writer, context, currentFormField);
+                Debug.logVerbose("no spacer cell, might add later though...", MODULE);
             } else {
                 if (haveRenderedOpenFieldRow) {
                     // render row formatting close
@@ -1186,8 +1193,9 @@ public class FormRenderer {
         String lookupName = modelForm.getListName();
         Object obj = context.get(lookupName);
         if (obj == null) {
-            if (Debug.verboseOn())
+            if (Debug.verboseOn()) {
                 Debug.logVerbose("No object for list or iterator name [" + lookupName + "] found, so not rendering rows.", MODULE);
+            }
             return true;
         }
         // if list is empty, do not render rows

@@ -103,7 +103,7 @@ public final class ServiceDispatcher {
 
         // clean up the service semaphores of same instance
             try {
-                int rn = delegator.removeByAnd("ServiceSemaphore", "lockedByInstanceId", JobManager.instanceId);
+                int rn = delegator.removeByAnd("ServiceSemaphore", "lockedByInstanceId", JobManager.INSTANCE_ID);
                 if (rn > 0) {
                     Debug.logInfo("[ServiceDispatcher.init] : Clean up " + rn + " service semaphors.", MODULE);
                 }
@@ -195,7 +195,7 @@ public final class ServiceDispatcher {
     public void deregister(LocalDispatcher local) {
         Debug.logInfo("De-Registering dispatcher: " + local.getName(), MODULE);
         localContext.remove(local.getName());
-        if (localContext.size() == 0) {
+        if (localContext.isEmpty()) {
             try {
                 this.shutdown();
             } catch (GenericServiceException e) {
