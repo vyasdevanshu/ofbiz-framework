@@ -289,7 +289,7 @@ checkstyle {
     // the sum of errors found last time it was changed after using the
     // ‘checkstyle’ tool present in the framework and in the official
     // plugins.
-    tasks.checkstyleMain.maxErrors = 535
+    tasks.checkstyleMain.maxErrors = 503
     // Currently there are a lot of errors so we need to temporarily
     // hide them to avoid polluting the terminal output.
     showViolations = false
@@ -504,7 +504,9 @@ tasks.withType(AsciidoctorTask) { task ->
     backends 'html5', 'pdf'
     attributes \
         'doctype': 'book',
+        'revnumber': 'Trunk',
         'experimental': '',
+        'allow-uri-read': true,
         'icons': 'font',
         'sectnums': '',
         'chapter-label': '',
@@ -539,15 +541,27 @@ task generateReadmeFiles(group: docsGroup, type: AsciidoctorTask) {
     sourceDir "${rootDir}"
     sources {
         include 'README.adoc', 'CHANGELOG.adoc', 'CONTRIBUTING.adoc'
-      }    
+      }
     outputDir file("${buildDir}/asciidoc/readme/")
 }
 
 task generateOfbizDocumentation(group: docsGroup, type: AsciidoctorTask) {
     dependsOn deleteOfbizDocumentation
     description 'Generate OFBiz documentation manuals'
+        activeComponents().each { component ->
+            copy {
+                from "${component}/src/docs/asciidoc/images/${component.name}"
+                include '**/*.*'
+                into "${rootDir}/docs/asciidoc/images/${component.name}"
+            }
+        }
     sourceDir "${rootDir}/docs/asciidoc"
     outputDir file("${buildDir}/asciidoc/ofbiz")
+    doLast {
+      activeComponents().each { component ->
+          delete "${rootDir}/docs/asciidoc/images/${component.name}"
+      }
+    }
 }
 
 task generatePluginDocumentation(group: docsGroup) {
@@ -589,11 +603,15 @@ task generateAllPluginsDocumentation(group: docsGroup,
                     // the other inner task temporary created by the generatePluginDocumentation task
                     def pluginAsciidoc = task "${component.name}-Documentation" (type: AsciidoctorTask) {
                         def asciidocFolder = new File("${component}/src/docs/asciidoc")
-                        if (asciidocFolder.exists()) {
-                            copy {
-                                from "${rootDir}/docs/asciidoc/images/OFBiz-Logo.svg"
-                                into "${component}/src/docs/asciidoc/images"
+                        doFirst {
+                            if (asciidocFolder.exists()) {
+                                copy {
+                                    from "${rootDir}/docs/asciidoc/images/OFBiz-Logo.svg"
+                                    into "${component}/src/docs/asciidoc/images"
+                                }
                             }
+                        }
+                        if (asciidocFolder.exists()) {
                             sourceDir file("${component}/src/docs/asciidoc")
                             outputDir file("${buildDir}/asciidoc/plugins/${component.name}")
                             doLast { println "Documentation generated for plugin ${component.name}" }
@@ -603,7 +621,6 @@ task generateAllPluginsDocumentation(group: docsGroup,
                     }
                     dependsOn pluginAsciidoc
                 }
-                doLast { delete "${component}/src/docs/asciidoc/images/OFBiz-Logo.svg" }
             }
         }
     }

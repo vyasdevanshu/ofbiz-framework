@@ -39,6 +39,7 @@ import org.apache.ofbiz.base.util.collections.MapStack;
 import org.apache.ofbiz.base.util.string.FlexibleStringExpander;
 import org.apache.ofbiz.base.util.template.FreeMarkerWorker;
 import org.apache.ofbiz.security.CsrfUtil;
+import org.apache.ofbiz.webapp.SeoConfigUtil;
 import org.apache.ofbiz.widget.renderer.ScreenRenderer;
 import org.apache.ofbiz.widget.renderer.ScreenStringRenderer;
 import org.apache.ofbiz.widget.renderer.html.HtmlWidgetRenderer;
@@ -167,18 +168,10 @@ public class HtmlWidget extends ModelScreenWidget {
                 if (insertWidgetBoundaryComments) {
                     writer.append(HtmlWidgetRenderer.buildBoundaryComment("Begin", "Template", location));
                 }
-                boolean insertWidgetNamedBorder = false;
-                NamedBorderType namedBorderType = null;
-                if (!location.endsWith(".fo.ftl")) {
-                    namedBorderType = ModelWidget.widgetNamedBorderEnabled();
-                    if (namedBorderType != NamedBorderType.NONE) {
-                        insertWidgetNamedBorder = true;
-                    }
+                if (HtmlWidgetRenderer.NAMED_BORDER_TYPE != ModelWidget.NamedBorderType.NONE && !location.endsWith(".fo.ftl")) {
+                    HttpServletRequest request = ((HttpServletRequest) context.get("request"));
+                    writer.append(HtmlWidgetRenderer.beginNamedBorder("Template", location, request.getContextPath()));
                 }
-                if (insertWidgetNamedBorder) {
-                    writer.append(HtmlWidgetRenderer.buildNamedBorder("Begin", "Template", location, namedBorderType));
-                }
-
                 Template template = null;
                 if (location.endsWith(".fo.ftl")) { // FOP can't render correctly escaped characters
                     template = FreeMarkerWorker.getTemplate(location);
@@ -187,8 +180,8 @@ public class HtmlWidget extends ModelScreenWidget {
                 }
                 FreeMarkerWorker.renderTemplate(template, context, writer);
 
-                if (insertWidgetNamedBorder) {
-                    writer.append(HtmlWidgetRenderer.buildNamedBorder("End", "Template", location, namedBorderType));
+                if (HtmlWidgetRenderer.NAMED_BORDER_TYPE != ModelWidget.NamedBorderType.NONE && !location.endsWith(".fo.ftl")) {
+                    writer.append(HtmlWidgetRenderer.endNamedBorder("Template", location));
                 }
                 if (insertWidgetBoundaryComments) {
                     writer.append(HtmlWidgetRenderer.buildBoundaryComment("End", "Template", location));
@@ -324,12 +317,17 @@ public class HtmlWidget extends ModelScreenWidget {
                         }
                         String key = MultiBlockHtmlTemplateUtil.putScriptInCache(context, fileName, scripts.toString());
 
+                        HttpServletRequest request = (HttpServletRequest) context.get("request");
                         // construct script link
-                        String webappName = (String) context.get("webappName");
-                        String url = "/" + webappName + "/control/getJs?name=" + key;
+                        String contextPath = request.getContextPath();
+                        String url = null;
+                        if (SeoConfigUtil.isCategoryUrlEnabled(contextPath)) {
+                            url = contextPath + "/getJs?name=" + key;
+                        } else {
+                            url = contextPath + "/control/getJs?name=" + key;
+                        }
 
                         // add csrf token to script link
-                        HttpServletRequest request = (HttpServletRequest) context.get("request");
                         String tokenValue = CsrfUtil.generateTokenForNonAjax(request, "getJs");
                         url = CsrfUtil.addOrUpdateTokenInUrl(url, tokenValue);
 
